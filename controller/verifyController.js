@@ -1,7 +1,6 @@
 //Post_login
 const { User } = require("../models/User.js");
 const { Wallet } = require("../models/Wallet.js");
-const { io } = require("../server.js");
 const utils = require("../utils/index.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");

@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const morgan = require('morgan');
-const { Server } = require('socket.io'); 
 const connectDB = require('./db.js');
 const Controller = require('./controller/verifyController.js');
 const userController = require('./controller/userController.js');
@@ -12,8 +11,6 @@ const transHistoryController = require('./controller/transHistoryController.js')
 const authMiddleware = require('./auth.js');
 
 const app = express();
-// const server = http.createServer(app); 
-
 const allowedOrigins = [
   "http://localhost:5173",        
   // "https://your-frontend.vercel.app" 
