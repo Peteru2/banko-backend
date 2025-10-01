@@ -9,30 +9,18 @@ const authMiddleware = require('./auth.js');
 
 const app = express();
 
-const allowedOrigins = [
-  // "http://localhost:5173",
-    process.env.CLIENT_URL
-];
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+app.options("*", cors());
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); 
-
-    const allowed = [
-      "http://localhost:5173",           
-      "https://banko-rho.vercel.app"     
-    ];
-    if (allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS blocked this origin: " + origin));
-    }
-  },
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions));
 
 app.use(morgan('dev'));
 app.use(express.json());
@@ -48,9 +36,9 @@ app.post('/verifyEmail', Controller.verifyEmail);
 
 app.use(authMiddleware);
 
-// app.get('/', (req, res) => {
-//   res.json({ message: "API running on Vercel 🚀" });
-// });
+app.get('/', (req, res) => {
+  res.json({ message: "API running on Vercel 🚀" });
+});
 
 app.get('/user', userController.Get_user);
 app.put('/updateTransactionPin', Controller.UpdateTransPin);
