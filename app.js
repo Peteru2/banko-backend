@@ -39,9 +39,9 @@ app.post('/verifyEmail', Controller.verifyEmail);
 
 app.use(authMiddleware);
 
-app.get('/', (req, res) => {
-  res.json({ message: "API running on Vercel 🚀" });
-});
+// app.get('/', (req, res) => {
+//   res.json({ message: "API running on Vercel 🚀" });
+// });
 
 app.get('/user', userController.Get_user);
 app.put('/updateTransactionPin', Controller.UpdateTransPin);
