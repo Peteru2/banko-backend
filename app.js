@@ -17,7 +17,7 @@ app.use(
     credentials: true,
   })
 );
-app.options("*", cors());
+// app.options("*", cors());
 
 // app.use(cors(corsOptions));
 // app.options("*", cors(corsOptions));
@@ -25,20 +25,13 @@ app.options("*", cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
 connectDB();
-
 
 app.post('/SignUp', Controller.Post_signUp);
 app.post('/Login', Controller.Post_login);
 app.post('/verifyEmail', Controller.verifyEmail);
 
 app.use(authMiddleware);
-
-app.get('/', (req, res) => {
-  res.json({ message: "API running on Vercel 🚀" });
-});
 
 app.get('/user', userController.Get_user);
 app.put('/updateTransactionPin', Controller.UpdateTransPin);
@@ -47,6 +40,8 @@ app.get('/balance', Controller.GetBalance);
 app.post('/val_transfer', Controller.Check_transfer);
 app.post('/transfer', Controller.Post_transfer);
 app.get('/trans-history', transHistoryController.Transfer_history);
-
+app.get('/', (req, res) => {
+  res.json({ message: "API running on Vercel" });
+});
 
 module.exports = app;
