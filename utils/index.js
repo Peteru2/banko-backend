@@ -42,29 +42,51 @@ function generateEmailVerificationCode(length = 6) {
   return otp;
 }
 
+// async function transporter(user, emailVerificationCode) {
+//   try {
+//     const mailtransporter = nodemailer.createTransport({
+//       service: "gmail",
+//       auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASS, 
+//       },
+//       tls: {
+//         rejectUnauthorized: false,
+//       },
+//     });
+
+//     await mailtransporter.sendMail({
+//       from: `"Banko" <${process.env.EMAIL_USER}>`,
+//       to: user.email,
+//       subject: "Your Verification Code",
+//       text: `Your verification code is ${emailVerificationCode}. It will expire in 10 minutes.`,
+//     });
+//   } catch (error) {
+//     console.error("Error:", error);
+//   }
+// }
+
+
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 async function transporter(user, emailVerificationCode) {
   try {
-    const mailtransporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, 
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    await mailtransporter.sendMail({
-      from: `"Banko" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "Banko <onboarding@resend.dev>",
       to: user.email,
       subject: "Your Verification Code",
       text: `Your verification code is ${emailVerificationCode}. It will expire in 10 minutes.`,
     });
+
+    console.log("✅ Verification email sent to:", user.email);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("❌ Error sending email:", error);
   }
 }
+
+module.exports = transporter;
 
   module.exports = {
     convertPhoneToISO,

@@ -11,12 +11,27 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "https://banko-rho.vercel.app",
+      "http://localhost:5173/"
+
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+// "headers": [
+//     {
+//       "source": "/(.*)",
+//       "headers": [
+//         { "key": "Access-Control-Allow-Origin", "value": "https://banko-rho.vercel.app" },
+//         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+//         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+//         { "key": "Access-Control-Allow-Credentials", "value": "true" }
+//       ]
+//     }
+//   ]
 // app.options("*", cors());
 
 // app.use(cors(corsOptions));
