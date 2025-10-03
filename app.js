@@ -21,29 +21,15 @@ app.use(
     credentials: true,
   })
 );
-// "headers": [
-//     {
-//       "source": "/(.*)",
-//       "headers": [
-//         { "key": "Access-Control-Allow-Origin", "value": "https://banko-rho.vercel.app" },
-//         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-//         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
-//         { "key": "Access-Control-Allow-Credentials", "value": "true" }
-//       ]
-//     }
-//   ]
-// app.options("*", cors());
 
-// app.use(cors(corsOptions));
-// app.options("*", cors(corsOptions));
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 connectDB();
 
-app.post('/SignUp', Controller.Post_signUp);
-app.post('/Login', Controller.Post_login);
+app.post('/signUp', Controller.Post_signUp);
+app.post('/login', Controller.Post_login);
 app.post('/verifyEmail', Controller.verifyEmail);
 
 app.use(authMiddleware);
@@ -56,7 +42,7 @@ app.post('/val_transfer', Controller.Check_transfer);
 app.post('/transfer', Controller.Post_transfer);
 app.get('/trans-history', transHistoryController.Transfer_history);
 app.get('/', (req, res) => {
-  res.json({ message: "API running on Vercel" });
+  res.json({ message: "We are live" });
 });
 
 module.exports = app;
