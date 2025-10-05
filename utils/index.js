@@ -1,6 +1,8 @@
-const dotenv = require('dotenv');
-dotenv.config();
-const nodemailer = require('nodemailer');
+// const dotenv = require('dotenv');
+// dotenv.config();
+// const nodemailer = require('nodemailer');
+const axios = require('axios');
+// import axios from "axios"
 
 const convertPhoneToISO = (number, countryCode = "234") => {
   if (!number) return "";
@@ -42,55 +44,59 @@ function generateEmailVerificationCode(length = 6) {
   return otp;
 }
 
-async function transporter(user, emailVerificationCode) {
-  try {
-    const mailtransporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, 
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    await mailtransporter.sendMail({
-      from: `"Banko" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "Your Verification Code",
-      text: `Your verification code is ${emailVerificationCode}. It will expire in 10 minutes.`,
-    });
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-
-// const { Resend } = require("resend");
-
-// const resend = new Resend(process.env.RESEND_API_KEY);
-
 // async function transporter(user, emailVerificationCode) {
 //   try {
-//     await resend.emails.send({
-//       from: "Banko <onboarding@resend.dev>",
+//     const mailtransporter = nodemailer.createTransport({
+//       host: "smtp.gmail.com",
+//       port: 587,
+//       secure: false,
+//       auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASS, 
+//       },
+//       tls: {
+//         rejectUnauthorized: false,
+//       },
+//     });
+
+//     await mailtransporter.verify();
+//     await mailtransporter.sendMail({
+//       from: `"Banko" <${process.env.EMAIL_USER}>`,
 //       to: user.email,
 //       subject: "Your Verification Code",
 //       text: `Your verification code is ${emailVerificationCode}. It will expire in 10 minutes.`,
 //     });
-
-//     console.log("Verification email sent to:", user.email);
+//     console.log("Email sent successfully")
 //   } catch (error) {
-//     console.error("Error sending email:", error);
+//     console.error("Error:", error);
 //   }
 // }
 
-module.exports = transporter;
+
+// async function transporter(user, emailVerificationCode) {
+//   try {
+//     await axios.post("https://api.brevo.com/v3/smtp/email", {
+//       sender: { name: "Banko", email: "no-reply@bankoapp.com" },
+//           to: [{ email: user.email }],
+//       subject: "Your Verification Code",
+//       textContent: `Your verification code is ${emailVerificationCode}. It expires in 10 minutes.`,
+//     }, {
+//       headers: {
+//         "api-key": process.env.BREVO_API_KEY,
+//         "Content-Type": "application/json",
+//       },
+//     });
+
+//     console.log("Email sent successfully via Brevo");
+//   } catch (error) {
+//     console.error("Email error:", error.response?.data || error.message);
+//   }
+// }
+
 
   module.exports = {
     convertPhoneToISO,
     generateAccountNumber,
     generateEmailVerificationCode,
-    transporter
+    // transporter
   }

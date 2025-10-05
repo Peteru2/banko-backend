@@ -26,7 +26,7 @@ const Post_signUp = async (req, res) => {
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
       accountBalance: 0,
-      status: false,
+      status: true,
       kycLevel: 1,
       transactionPin: 0,
       bvn: 0,
@@ -59,7 +59,7 @@ const Post_signUp = async (req, res) => {
       await wallet.save();
     }
     
-    utils.transporter(user, emailVerificationCode)
+    // utils.transporter(user, emailVerificationCode)
     res.status(201).json({ message: "Account successfully Created", user });
   } catch (error) {
     console.error("Error:", error);
@@ -90,7 +90,7 @@ const Post_login = async (req, res) => {
         emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
       });
    
-    utils.transporter(user, emailVerificationCode)
+    // utils.transporter(user, emailVerificationCode)
 
       return res.status(401).json({ user: userID });
     }
@@ -146,9 +146,6 @@ const UpdateTransPin = async (req, res) => {
     await User.findByIdAndUpdate(req.user.userId, {
       transactionPin: hashedPin,
     });
-
-    // Emit a Socket.IO event to notify connected clients about the pin update
-    io.emit("transactionPinUpdated", { userId: req.user.userId });
 
     res.status(200).json({ message: "Transaction pin updated successfully" });
   } catch (error) {
@@ -337,22 +334,6 @@ const Post_transfer = async (req, res) => {
   }
 };
 
-const Transfer_history = async (req, res) => {
-  try {
-    const userID = req.user.userId;
-    const transferHistory = await Transaction.find({
-      $or: [{ sender: userID }, { recipient: userID }],
-    }).populate("sender recipient");
-
-    if (!transferHistory || transferHistory.length === 0) {
-      return res.status(404).json({ error: "No history found" });
-    }
-    res.json({ transferHistory });
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 
 const notificationInfo = async (req, res) => {
   try {
