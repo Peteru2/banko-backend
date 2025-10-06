@@ -52,12 +52,10 @@ const Post_signUp = async (req, res) => {
     if (checkNum) {
       return res.status(401).json({ error: "This phone number already exist" });
     }
-    if (checkAccNum) {
-      utils.generateAccountNumber();
-    } else {
+    
       await user.save();
       await wallet.save();
-    }
+    
     
     // utils.transporter(user, emailVerificationCode)
     res.status(201).json({ message: "Account successfully Created", user });
