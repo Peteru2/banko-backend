@@ -37,13 +37,13 @@ const Post_signUp = async (req, res) => {
 
     const wallet = new Wallet({
       user: user._id,
-      accountNumber: newAccountNumber,
+      accountNumber: phoneNumber,
     });
 
     const checkMail = await User.findOne({ email: email });
     const checkNum = await User.findOne({ phoneNumber: formattedPhoneNumber });
     const checkAccNum = await Wallet.findOne({
-      accountNumber: newAccountNumber,
+      accountNumber: phoneNumber,
     });
 
     if (checkMail) {
