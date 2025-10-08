@@ -7,8 +7,10 @@ const bcrypt = require("bcryptjs");
 const { Notification } = require("../models/Notification.js");
 const nodemailer = require("nodemailer");
 const { Transaction } = require("../models/Transaction.js");
+const crypto = require("crypto");
 
-const Post_signUp = async (req, res) => {
+
+const postSignUp = async (req, res) => {
   try {
     const { firstname, lastname, email, phoneNumber, password } = req.body;
     const formattedPhoneNumber = utils.convertPhoneToISO(phoneNumber);
@@ -16,7 +18,7 @@ const Post_signUp = async (req, res) => {
       return res.status(400).json({ error: "Invalid phone number format" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newAccountNumber = utils.generateAccountNumber();
+    // const newAccountNumber = utils.generateAccountNumber();
     const emailVerificationCode = utils.generateEmailVerificationCode();
 
     const user = new User({
@@ -30,12 +32,13 @@ const Post_signUp = async (req, res) => {
       kycLevel: 1,
       transactionPin: 0,
       bvn: 0,
+      bvnFingerprint:0,
       accountNumber: 0,
       emailVerificationCode: emailVerificationCode,
       emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
     });
 
-    const wallet = new Wallet({
+    const wallet = new Wallet({         
       user: user._id,
       accountNumber: phoneNumber,
     });
@@ -67,7 +70,7 @@ const Post_signUp = async (req, res) => {
   }
 };
 
-const Post_login = async (req, res) => {
+const postLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email: email });
@@ -136,7 +139,7 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-const UpdateTransPin = async (req, res) => {
+const updateTransactionPin = async (req, res) => {
   try {
     const { pin } = req.body;
     const hashedPin = await bcrypt.hash(pin, 10);
@@ -152,46 +155,37 @@ const UpdateTransPin = async (req, res) => {
   }
 };
 
-const UpdateKyc = async (req, res) => {
+const updateKyc = async (req, res) => {
   try {
     const { bvn } = req.body;;
-    const hashedPin = await bcrypt.hash(bvn, 10);
+
     const user = await User.findById(req.user.userId);
-
-    const allUsers = await User.find();
-
-    // Loop through all users and compare their encrypted BVNs with the BVN provided by the user
-    let bvnMatch = false;
-    for (const user of allUsers) {
-      const encryptedBVN = user.bvn;
-      const match = await bcrypt.compare(bvn, encryptedBVN);
-      if (match) {
-        bvnMatch = true;
-        break; // Exit the loop if a match is found
-      }
-    }
+    const hashedBVN = await bcrypt.hash(bvn, 10);
+    const bvnFingerprint = crypto.createHash("sha256").update(bvn).digest("hex");
+    const existing = await User.findOne({ bvnFingerprint });
 
     if (user.bvn !== "0") {
       return res.status(401).json({ error: "KYC already Updated" });
     }
-    if (bvnMatch) {
-      // If the provided BVN matches the encrypted BVN of an existing user
+    if (existing) {
       return res.status(400).json({ error: "BVN already exists" });
     }
-    if (user.bvn == "0") {
-      await User.findByIdAndUpdate(req.user.userId, {
-        kycLevel: "2",
-        bvn: hashedPin,
-      });
+
+    await User.findByIdAndUpdate(req.user.userId, {
+      kycLevel: "2",
+      bvn: hashedBVN,
+      bvnFingerprint,
+    });
+    
+  
       res.status(200).json({ message: "KYC Level Upgraded successfully" });
-    }
   } catch (error) {
     console.error("Failed to update transaction pin:", error);
     res.status(500).json({ error: "Failed to update transaction pin" });
   }
 };
 
-const GetBalance = async (req, res) => {
+const getBalance = async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ user: req.user.userId });
     if (!wallet) {
@@ -203,7 +197,7 @@ const GetBalance = async (req, res) => {
   }
 };
 
-const Check_transfer = async (req, res) => {
+const validateTransfer = async (req, res) => {
   try {
     const { recipientAccountNumber, amount } = req.body;
     // Find sender's wallet
@@ -240,14 +234,14 @@ const Check_transfer = async (req, res) => {
 
     const recipientId = recipientWallet.user;
     const recipientData = await User.findOne({ _id: recipientId });
-    res.json({ mes: "success", user: recipientData });
+    res.json({ message: "success", user: recipientData });
   } catch (error) {
     console.error("Failed to transfer funds:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-const Post_transfer = async (req, res) => {
+const transfer = async (req, res) => {
   try {
     const { recipientAccountNumber, amount, transPin } = req.body;
 
@@ -302,15 +296,13 @@ const Post_transfer = async (req, res) => {
       return res.status(400).json({ error: "Transaction Pin Incorrect" });
     }
 
-    // Update sender's balance
+ 
     senderWallet.balance -= amount;
     await senderWallet.save();
 
-    // Update recipient's balance
     recipientWallet.balance += parseInt(amount);
     await recipientWallet.save();
 
-    // Create transaction record
     const transaction = new Transaction({
       sender: senderWallet.user,
       recipient: recipientWallet.user,
@@ -340,13 +332,13 @@ const notificationInfo = async (req, res) => {
 };
 
 module.exports = {
-  Post_signUp,
-  Post_login,
+  postSignUp,
+  postLogin,
   verifyEmail,
-  UpdateTransPin,
-  UpdateKyc,
-  GetBalance,
-  Check_transfer,
-  Post_transfer,
+  updateTransactionPin,
+  updateKyc,
+  getBalance,
+  validateTransfer,
+  transfer,
   notificationInfo,
 };

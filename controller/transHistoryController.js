@@ -1,6 +1,6 @@
 const { Transaction } = require("../models/Transaction.js");
 
-const Transfer_history = async (req, res) => {
+const transferHistory = async (req, res) => {
   try {
     const userID = req.user.userId;
     const transferHistory = await Transaction.find({
@@ -18,5 +18,5 @@ const Transfer_history = async (req, res) => {
 };
 
 module.exports = {
-    Transfer_history
+    transferHistory
 }

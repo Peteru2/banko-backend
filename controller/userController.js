@@ -1,6 +1,6 @@
 const { User } = require("../models/User.js");
 
-const Get_user = async (req, res) => {
+const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     if (!user) {
@@ -15,5 +15,5 @@ const Get_user = async (req, res) => {
   }
 };
 module.exports = {
-    Get_user
+    getUser
 }

@@ -35,6 +35,7 @@ const registrationSchema = new Schema({
     transactionPin: String,
     kycLevel: String,
     bvn: String,
+    bvnFingerprint:String,
     accountNumber:String,
     emailVerificationCodeExpiryDate:String,
   
