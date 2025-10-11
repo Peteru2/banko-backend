@@ -31,6 +31,7 @@ const registrationSchema = new Schema({
         type: Boolean,
         required: true,
     },
+    profileImage: { type: String, default: "" },
     emailVerificationCode: String,
     transactionPin: String,
     kycLevel: String,

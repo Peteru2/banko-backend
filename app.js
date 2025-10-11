@@ -6,6 +6,7 @@ const Controller = require('./controller/verifyController.js');
 const userController = require('./controller/userController.js');
 const transHistoryController = require('./controller/transHistoryController.js');
 const authMiddleware = require('./auth.js');
+const {upload, uploadImage} = require('./controller/verifyController.js');
 
 const app = express();
 
@@ -31,6 +32,7 @@ connectDB();
 app.post('/signUp', Controller.postSignUp);
 app.post('/login', Controller.postLogin);
 app.post('/verifyEmail', Controller.verifyEmail);
+app.use("/uploads", express.static("uploads"));
 
 app.use(authMiddleware);
 
@@ -41,6 +43,9 @@ app.get('/balance', Controller.getBalance);
 app.post('/val_transfer', Controller.validateTransfer);
 app.post('/transfer', Controller.transfer);
 app.get('/trans-history', transHistoryController.transferHistory);
+
+app.post("/upload", upload.single("image"), uploadImage);
+
 app.get('/', (req, res) => {
   res.json({ message: "We are live" });
 });
