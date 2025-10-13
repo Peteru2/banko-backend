@@ -335,14 +335,15 @@ const notificationInfo = async (req, res) => {
   } catch {}
 };
 
-const uploadImage = async (req, res) =>{
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-
-  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+const uploadImage = async (req, res) => {
   try {
-  
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Cloudinary automatically gives us a secure_url
+    const fileUrl = req.file.path;
+
     if (req.user && req.user.userId) {
       const userId = req.user.userId;
       const user = await User.findByIdAndUpdate(
@@ -350,15 +351,20 @@ const uploadImage = async (req, res) =>{
         { profileImage: fileUrl },
         { new: true }
       );
-      return res.json({ message: "File uploaded successfully", fileUrl, user });
+      return res.json({
+        message: "File uploaded successfully",
+        fileUrl,
+        user,
+      });
     }
 
+  
     res.json({ message: "File uploaded successfully", fileUrl });
   } catch (err) {
     console.error("Failed to save uploaded file to user:", err);
     res.status(500).json({ error: "Failed to save uploaded file" });
   }
-}
+};
 
 const upload= multer({ storage, fileFilter });
 
