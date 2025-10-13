@@ -1,8 +1,10 @@
 // const dotenv = require('dotenv');
 // dotenv.config();
 // const nodemailer = require('nodemailer');
-const multer = require("multer");
 const path = require("path");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinary");
+
 
 const convertPhoneToISO = (number, countryCode = "234") => {
   if (!number) return "";
@@ -93,17 +95,24 @@ function generateEmailVerificationCode(length = 6) {
 //   }
 // }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // save files in /uploads folder
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname)); // e.g., 172838920-photo.png
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads/"); // save files in /uploads folder
+//   },
+//   filename: (req, file, cb) => {
+//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+//     cb(null, uniqueSuffix + path.extname(file.originalname)); // e.g., 172838920-photo.png
+//   },
+// });
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "banko-profile-images",
+    allowed_formats: ["jpg", "png", "jpeg"],
   },
 });
 
-// File filter (optional)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png/;
   const ext = path.extname(file.originalname).toLowerCase();
