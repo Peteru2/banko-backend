@@ -47,7 +47,7 @@ app.get('/trans-history', transHistoryController.transferHistory);
 app.post("/upload", upload.single("image"), uploadImage);
 
 app.get('/', (req, res) => {
-  res.json({ message: "We are live" });
+  res.json({ message: "We are liiive" });
 });
 
 module.exports = app;
