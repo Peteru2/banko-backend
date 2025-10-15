@@ -8,10 +8,7 @@ const { Notification } = require("../models/Notification.js");
 const nodemailer = require("nodemailer");
 const { Transaction } = require("../models/Transaction.js");
 const crypto = require("crypto");
-const multer = require("multer");
-const {storage, fileFilter} = require("../utils/index.js");
-
-
+const { upload } = require("../utils/cloudinary.js");
 
 
 const postSignUp = async (req, res) => {
@@ -341,7 +338,6 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Cloudinary automatically gives us a secure_url
     const fileUrl = req.file.path;
 
     if (req.user && req.user.userId) {
@@ -365,8 +361,6 @@ const uploadImage = async (req, res) => {
     res.status(500).json({ error: "Failed to save uploaded file" });
   }
 };
-
-const upload= multer({ storage, fileFilter });
 
 module.exports = {
   postSignUp,

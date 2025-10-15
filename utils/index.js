@@ -108,7 +108,7 @@ function generateEmailVerificationCode(length = 6) {
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "banko-profile-images",
+     folder: "banko-profile-images",
     allowed_formats: ["jpg", "png", "jpeg"],
   },
 });
