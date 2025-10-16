@@ -37,18 +37,19 @@ connectDB();
 app.post('/signUp', Controller.postSignUp);
 app.post('/login', Controller.postLogin);
 app.post('/verifyEmail', Controller.verifyEmail);
+app.post('/logout', logoutUser);
+
 
 app.use(authMiddleware);
 
 app.get('/user', userController.getUser);
-app.post('/logout', logoutUser);
 app.post('/refresToken', refreshToken); 
 app.put('/updateTransactionPin', Controller.updateTransactionPin);
 app.put('/updatekyc', Controller.updateKyc);
 app.get('/balance', Controller.getBalance);
-app.post('/val_transfer', Controller.validateTransfer);
+app.post('/validateTransfer', Controller.validateTransfer);
 app.post('/transfer', Controller.transfer);
-app.get('/trans-history', transHistoryController.transferHistory);
+app.get('/transactionHistory', transHistoryController.transferHistory);
 app.use("/uploads", express.static("uploads"));
 app.post("/upload", upload.single("image"), uploadImage);
 
