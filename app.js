@@ -36,8 +36,8 @@ connectDB();
 
 app.post('/signUp', Controller.postSignUp);
 app.post('/login', Controller.postLogin);
-app.post('/verifyEmail', Controller.verifyEmail);
 app.post('/logout', logoutUser);
+app.post('/verifyEmail', Controller.verifyEmail);
 
 
 app.use(authMiddleware);
