@@ -102,6 +102,23 @@ const postLogin = async (req, res) => {
       process.env.JWT_SECRET_KEY,
       { expiresIn: "2h" }
     ); 
+
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+    user.refreshToken = refreshToken
+    await user.save()
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
+    });
+
+
     res.status(200).json({
       success: "Exist",
       token,
@@ -114,6 +131,7 @@ const postLogin = async (req, res) => {
     res.status(500).json({ error: "An error occurred while logging in" });
   }
 };
+
 
 const verifyEmail = async (req, res) => {
   try {

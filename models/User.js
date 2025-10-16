@@ -39,6 +39,7 @@ const registrationSchema = new Schema({
     bvnFingerprint:String,
     accountNumber:String,
     emailVerificationCodeExpiryDate:String,
+    refreshToken:String,
   
 })
 const User = mongoose.model('User', registrationSchema);
