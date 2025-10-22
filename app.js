@@ -9,6 +9,8 @@ const transHistoryController = require('./controller/transHistoryController.js')
 const {upload, uploadImage} = require('./controller/verifyController.js');
 const {logoutUser} = require('./controller/logoutController.js');
 const  { refreshToken } = require('./controller/refreshTokenController.js');
+const  {  googleSignUpController } = require('./controller/googleSignUpController.js');
+
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.post('/signUp', Controller.postSignUp);
 app.post('/login', Controller.postLogin);
 app.post('/logout', logoutUser);
 app.post('/verifyEmail', Controller.verifyEmail);
+app.post('/googleSignUp', googleSignUpController);
+
 
 
 app.use(authMiddleware);
