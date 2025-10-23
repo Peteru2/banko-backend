@@ -10,7 +10,7 @@ const {upload, uploadImage} = require('./controller/verifyController.js');
 const {logoutUser} = require('./controller/logoutController.js');
 const  { refreshToken } = require('./controller/refreshTokenController.js');
 const  {  googleSignUpController } = require('./controller/googleSignUpController.js');
-
+const {updatePhoneNumber} = require('./controller/updatePhoneNumberController.js');
 
 const app = express();
 
@@ -50,6 +50,8 @@ app.get('/user', userController.getUser);
 app.post('/refresToken', refreshToken); 
 app.put('/updateTransactionPin', Controller.updateTransactionPin);
 app.put('/updatekyc', Controller.updateKyc);
+app.put('/updatePhoneNumber', updatePhoneNumber);
+
 app.get('/balance', Controller.getBalance);
 app.post('/validateTransfer', Controller.validateTransfer);
 app.post('/transfer', Controller.transfer);

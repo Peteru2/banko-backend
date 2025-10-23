@@ -15,6 +15,8 @@ const postSignUp = async (req, res) => {
   try {
     const { firstname, lastname, email, phoneNumber, password } = req.body;
     const formattedPhoneNumber = utils.convertPhoneToISO(phoneNumber);
+    const noZeroPhoneNumber = utils.removeZero(phoneNumber)
+
     if (!formattedPhoneNumber) {
       return res.status(400).json({ error: "Invalid phone number format" });
     }
@@ -34,20 +36,20 @@ const postSignUp = async (req, res) => {
       transactionPin: 0,
       bvn: 0,
       bvnFingerprint:0,
-      accountNumber: 0,
+      accountNumber: noZeroPhoneNumber,
       emailVerificationCode: emailVerificationCode,
       emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
     });
 
     const wallet = new Wallet({         
       user: user._id,
-      accountNumber: phoneNumber,
+      accountNumber: noZeroPhoneNumber,
     });
 
     const checkMail = await User.findOne({ email: email });
     const checkNum = await User.findOne({ phoneNumber: formattedPhoneNumber });
     const checkAccNum = await Wallet.findOne({
-      accountNumber: phoneNumber,
+      accountNumber: noZeroPhoneNumber,
     });
 
     if (checkMail) {
@@ -117,7 +119,7 @@ const postLogin = async (req, res) => {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
-    
+
 
     res.status(200).json({
       success: "Exist",
@@ -296,7 +298,6 @@ const transfer = async (req, res) => {
       });
     }
 
-    // Update recipient's account number if it is 0
     const recipientUser = await User.findById(recipientWallet.user);
     if (recipientUser.accountNumber === "0") {
       await User.findByIdAndUpdate(recipientWallet.user, {

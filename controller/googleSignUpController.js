@@ -19,7 +19,12 @@ const googleSignUpController = async (req, res) => {
 
 
     let user = await User.findOne({ email });
-
+    if (user && user.isGoogleAccount === false) {
+            return res.status(401).json({
+      error: "Authenticating failed due to the following error: We already have a registered user with this email address. Log in to connect your google account.",
+     
+    });
+    } 
     if (!user) {
       const [firstname, ...rest] = name.split(" ");
       const lastname = rest.join(" ");

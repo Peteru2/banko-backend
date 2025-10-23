@@ -123,12 +123,19 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const removeZero = (phoneNumber) => {
+  if (phoneNumber.startsWith("0")) {
+    return phoneNumber.slice(1);
+  }
+  return phoneNumber;
+};
 
   module.exports = {
     convertPhoneToISO,
     generateAccountNumber,
     generateEmailVerificationCode,
     storage,
-    fileFilter
+    fileFilter,
+    removeZero
     // transporter
   }
