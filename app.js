@@ -18,7 +18,8 @@ app.use(
   cors({
     origin: [
       "https://bankoo.netlify.app",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://accounts.google.com",
 
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
