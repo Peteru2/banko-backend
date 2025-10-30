@@ -32,7 +32,7 @@ const postSignUp = async (req, res) => {
       password: hashedPassword,
       accountBalance: 0,
       status: true,
-      role: "user",
+      // role: "user",
       kycLevel: 1,
       transactionPin: 0,
       bvn: 0,
@@ -100,7 +100,7 @@ const postLogin = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
+      { userId: user._id, email: user.email },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "2h" }
     ); 

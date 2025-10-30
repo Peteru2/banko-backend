@@ -11,7 +11,7 @@ const {logoutUser} = require('./controller/logoutController.js');
 const  { refreshToken } = require('./controller/refreshTokenController.js');
 const  {  googleSignUpController } = require('./controller/googleSignUpController.js');
 const {updatePhoneNumber} = require('./controller/updatePhoneNumberController.js');
-const {adminVerifyController} = require('./controller/adminVerifyController.js');
+// const {adminVerifyController} = require('./controller/adminVerifyController.js');
 
 const app = express();
 
@@ -49,7 +49,7 @@ app.post('/googleSignUp', googleSignUpController);
 app.use(authMiddleware);
 
 app.get('/user', userController.getUser);
-app.get('/admin/dashboard', adminVerifyController);
+// app.get('/admin/dashboard', adminVerifyController);
 app.post('/refresToken', refreshToken); 
 app.put('/updateTransactionPin', Controller.updateTransactionPin);
 app.put('/updatekyc', Controller.updateKyc);

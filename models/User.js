@@ -31,12 +31,12 @@ const registrationSchema = new Schema({
         type: Number,
         required: true,
     },
-    role: {
-        type: String,
-        enum: ["user", "admin"],
-        default: "user",
-        required: true,
-        },
+    // role: {
+    //     type: String,
+    //     enum: ["user", "admin"],
+    //     default: "user",
+    //     required: true,
+    //     },
     status: {
         type: Boolean,
         required: true,
