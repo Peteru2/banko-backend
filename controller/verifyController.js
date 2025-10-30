@@ -15,6 +15,8 @@ const postSignUp = async (req, res) => {
   try {
     const { firstname, lastname, email, phoneNumber, password } = req.body;
     const formattedPhoneNumber = utils.convertPhoneToISO(phoneNumber);
+    const noZeroPhoneNumber = utils.removeZero(phoneNumber)
+
     if (!formattedPhoneNumber) {
       return res.status(400).json({ error: "Invalid phone number format" });
     }
@@ -30,24 +32,25 @@ const postSignUp = async (req, res) => {
       password: hashedPassword,
       accountBalance: 0,
       status: true,
+      role: "user",
       kycLevel: 1,
       transactionPin: 0,
       bvn: 0,
       bvnFingerprint:0,
-      accountNumber: 0,
+      accountNumber: noZeroPhoneNumber,
       emailVerificationCode: emailVerificationCode,
       emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
     });
 
     const wallet = new Wallet({         
       user: user._id,
-      accountNumber: phoneNumber,
+      accountNumber: noZeroPhoneNumber,
     });
 
     const checkMail = await User.findOne({ email: email });
     const checkNum = await User.findOne({ phoneNumber: formattedPhoneNumber });
     const checkAccNum = await Wallet.findOne({
-      accountNumber: phoneNumber,
+      accountNumber: noZeroPhoneNumber,
     });
 
     if (checkMail) {
@@ -92,13 +95,12 @@ const postLogin = async (req, res) => {
         emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
       });
    
-    // utils.transporter(user, emailVerificationCode)
 
       return res.status(401).json({ user: userID });
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "2h" }
     ); 
@@ -125,7 +127,7 @@ const postLogin = async (req, res) => {
       message: "User logged In Succesfully",
       user,
     });
-    console.log();
+   
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "An error occurred while logging in" });
@@ -296,7 +298,6 @@ const transfer = async (req, res) => {
       });
     }
 
-    // Update recipient's account number if it is 0
     const recipientUser = await User.findById(recipientWallet.user);
     if (recipientUser.accountNumber === "0") {
       await User.findByIdAndUpdate(recipientWallet.user, {

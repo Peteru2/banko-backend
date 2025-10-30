@@ -9,6 +9,9 @@ const transHistoryController = require('./controller/transHistoryController.js')
 const {upload, uploadImage} = require('./controller/verifyController.js');
 const {logoutUser} = require('./controller/logoutController.js');
 const  { refreshToken } = require('./controller/refreshTokenController.js');
+const  {  googleSignUpController } = require('./controller/googleSignUpController.js');
+const {updatePhoneNumber} = require('./controller/updatePhoneNumberController.js');
+const {adminVerifyController} = require('./controller/adminVerifyController.js');
 
 const app = express();
 
@@ -16,7 +19,8 @@ app.use(
   cors({
     origin: [
       "https://bankoo.netlify.app",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://accounts.google.com",
 
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -38,14 +42,19 @@ app.post('/signUp', Controller.postSignUp);
 app.post('/login', Controller.postLogin);
 app.post('/logout', logoutUser);
 app.post('/verifyEmail', Controller.verifyEmail);
+app.post('/googleSignUp', googleSignUpController);
+
 
 
 app.use(authMiddleware);
 
 app.get('/user', userController.getUser);
+app.get('/admin/dashboard', adminVerifyController);
 app.post('/refresToken', refreshToken); 
 app.put('/updateTransactionPin', Controller.updateTransactionPin);
 app.put('/updatekyc', Controller.updateKyc);
+app.put('/updatePhoneNumber', updatePhoneNumber);
+
 app.get('/balance', Controller.getBalance);
 app.post('/validateTransfer', Controller.validateTransfer);
 app.post('/transfer', Controller.transfer);

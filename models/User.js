@@ -17,20 +17,31 @@ const registrationSchema = new Schema({
     },
     phoneNumber:{
         type: String,
-        required: true
+        required: function() {
+        return !this.isGoogleAccount;
+    },
     },
     password: {
         type: String,
-        required: true,
+        required: function() {
+      return !this.isGoogleAccount;
+    },
     },
     accountBalance: {
         type: Number,
         required: true,
     },
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user",
+        required: true,
+        },
     status: {
         type: Boolean,
         required: true,
     },
+    isGoogleAccount: { type: Boolean, default: false },
     profileImage: { type: String, default: "" },
     emailVerificationCode: String,
     transactionPin: String,
