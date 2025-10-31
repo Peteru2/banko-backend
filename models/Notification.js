@@ -18,8 +18,9 @@ const notificationSchema = new mongoose.Schema({
     timestamp: {
       type: Date,
       default: Date.now,
-    }
-
+    },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
   });
 
   const Notification = mongoose.model('Notification', notificationSchema)

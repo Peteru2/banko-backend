@@ -18,8 +18,9 @@ const { Schema } = mongoose;
     date: {
       type: Date,
       default: Date.now
-    }
-   
+    },
+   isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
   });
 
   const Transaction = mongoose.model('Transaction', TransactionSchema);
