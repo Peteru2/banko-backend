@@ -208,7 +208,7 @@ const updateKyc = async (req, res) => {
 
 const getBalance = async (req, res) => {
   try {
-    const wallet = await Wallet.findOne({ user: req.user.userId });
+    const wallet = await Wallet.findOne({ user: req.user.userId});
     if (!wallet) {
       return res.status(404).json({ error: "Wallet not found" });
     }
@@ -255,11 +255,12 @@ const validateTransfer = async (req, res) => {
 
     const recipientId = recipientWallet.user;
     const recipientData = await User.findOne({ _id: recipientId });
+    console.log(recipientId)
     res.json({ message: "success", user: recipientData });
   } catch (error) {
     console.error("Failed to transfer funds:", error);
     res.status(500).json({ error: "Internal server error" });
-  }
+  };
 };
 
 const transfer = async (req, res) => {
