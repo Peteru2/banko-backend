@@ -40,6 +40,7 @@ const postSignUp = async (req, res) => {
       accountNumber: noZeroPhoneNumber,
       emailVerificationCode: emailVerificationCode,
       emailVerificationCodeExpiryDate: Date.now() + 10 * 60 * 1000,
+      createdAt: new Date()
     });
 
     const wallet = new Wallet({         

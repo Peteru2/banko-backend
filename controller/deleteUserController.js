@@ -7,9 +7,11 @@
     const { id } = req.params;
 
     const user = await User.findById(id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const adminId = req.body._id
 
-    // Soft delete user and related data
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if(user._id.toString()===adminId.toString())  return res.status(404).json({ success: false, message: "You cannot delete your own account" });
+  
     await Promise.all([
       User.findByIdAndUpdate(id, { isDeleted: true, deletedAt: new Date() }),
       Wallet.updateMany({ user: id }, { isDeleted: true, deletedAt: new Date() }),

@@ -41,6 +41,7 @@ const registrationSchema = new Schema({
         type: Boolean,
         required: true,
     },
+  createdAt: { type: Date, default: null },
     isGoogleAccount: { type: Boolean, default: false },
     profileImage: { type: String, default: "" },
     isDeleted: { type: Boolean, default: false },

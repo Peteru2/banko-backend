@@ -41,9 +41,11 @@ const googleSignUpController = async (req, res) => {
         kycLevel: 0,
         transactionPin: 0,
         bvn: 0,
+        kycLevel: 1,
         bvnFingerprint: 0,
         accountNumber: 0,
         profileImage: picture,
+        createdAt: new Date()
       });
 
       await user.save(); 
