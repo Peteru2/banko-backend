@@ -67,6 +67,7 @@ apiRouter.use("/uploads", express.static("uploads"));
 apiRouter.post("/upload", upload.single("image"), uploadImage);
 
 
+
 app.use('/api', apiRouter);
 
 app.get('/', (req, res) => {
