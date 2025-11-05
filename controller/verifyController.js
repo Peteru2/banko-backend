@@ -125,7 +125,7 @@ const postLogin = async (req, res) => {
     res.status(200).json({
       success: "Exist",
       token,
-      message: "User logged In Succesfully",
+      message:  `Hello, ${user.firstname}`,
       user,
     });
    
