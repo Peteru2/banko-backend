@@ -5,7 +5,7 @@
   "main": "auth.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server"
   },
   "author": "devpeter",
   "license": "ISC",
@@ -27,7 +27,6 @@
     "nodemailer": "^6.9.12",
     "resend": "^6.1.2",
     "say": "^0.16.0",
-    "serverless-http": "^4.0.0",
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
     "uuid": "^9.0.1"
