@@ -6,13 +6,15 @@ const authMiddleware = require('./auth.js');
 const Controller = require('./controller/verifyController.js');
 const userController = require('./controller/userController.js');
 const transHistoryController = require('./controller/transHistoryController.js');
-const {upload, uploadImage} = require('./controller/verifyController.js');
-const {logoutUser} = require('./controller/logoutController.js');
-const  { refreshToken } = require('./controller/refreshTokenController.js');
-const  {  googleSignUpController } = require('./controller/googleSignUpController.js');
-const {updatePhoneNumber} = require('./controller/updatePhoneNumberController.js');
-const {allUsersController} = require('./controller/allUsersController.js');
-const {deleteUserController} = require('./controller/deleteUserController.js');
+const { upload, uploadImage } = require('./controller/verifyController.js');
+const { logoutUser } = require('./controller/logoutController.js');
+const { refreshToken } = require('./controller/refreshTokenController.js');
+const { googleSignUpController } = require('./controller/googleSignUpController.js');
+const { updatePhoneNumber } = require('./controller/updatePhoneNumberController.js');
+const { allUsersController } = require('./controller/allUsersController.js');
+const { deleteUserController } = require('./controller/deleteUserController.js');
+const cookieParser = require("cookie-parser");
+
 const app = express();
 
 app.use(
@@ -21,49 +23,53 @@ app.use(
       "https://bankoo.netlify.app",
       "http://localhost:5173",
       "https://accounts.google.com",
-
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,    
+    credentials: true,
   })
 );
-
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 connectDB();
 
-app.post('/signUp', Controller.postSignUp);
-app.post('/login', Controller.postLogin);
-app.post('/logout', logoutUser);
-app.post('/verifyEmail', Controller.verifyEmail);
-app.post('/googleSignUp', googleSignUpController);
+
+const apiRouter = express.Router();
 
 
+apiRouter.post('/signUp', Controller.postSignUp);
+apiRouter.post('/login', Controller.postLogin);
+apiRouter.post('/logout', logoutUser);
+apiRouter.post('/verifyEmail', Controller.verifyEmail);
+apiRouter.post('/googleSignUp', googleSignUpController);
+apiRouter.post('/refreshToken', refreshToken);
 
-app.use(authMiddleware);
 
-app.get('/user', userController.getUser);
-app.get('/admin/users', allUsersController);
-app.delete('/admin/users/:id', deleteUserController);
-app.post('/refresToken', refreshToken); 
-app.put('/updateTransactionPin', Controller.updateTransactionPin);
-app.put('/updatekyc', Controller.updateKyc);
-app.put('/updatePhoneNumber', updatePhoneNumber);
+apiRouter.use(authMiddleware);
 
-app.get('/balance', Controller.getBalance);
-app.post('/validateTransfer', Controller.validateTransfer);
-app.post('/transfer', Controller.transfer);
-app.get('/transactionHistory', transHistoryController.transferHistory);
-app.use("/uploads", express.static("uploads"));
-app.post("/upload", upload.single("image"), uploadImage);
+apiRouter.get('/user', userController.getUser);
+apiRouter.get('/admin/users', allUsersController);
+apiRouter.delete('/admin/users/:id', deleteUserController);
+apiRouter.put('/updateTransactionPin', Controller.updateTransactionPin);
+apiRouter.put('/updateKyc', Controller.updateKyc);
+apiRouter.put('/updatePhoneNumber', updatePhoneNumber);
+apiRouter.get('/balance', Controller.getBalance);
+apiRouter.post('/validateTransfer', Controller.validateTransfer);
+apiRouter.post('/transfer', Controller.transfer);
+apiRouter.get('/transactionHistory', transHistoryController.transferHistory);
 
-app.get('/', (req, res) => {  
+
+apiRouter.use("/uploads", express.static("uploads"));
+apiRouter.post("/upload", upload.single("image"), uploadImage);
+
+
+app.use('/api', apiRouter);
+
+app.get('/', (req, res) => {
   res.json({ message: "We are live" });
 });
 
