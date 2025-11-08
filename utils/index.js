@@ -4,6 +4,7 @@
 const path = require("path");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
+const  crypto = require( "crypto");
 
 
 const convertPhoneToISO = (number, countryCode = "234") => {
@@ -130,12 +131,31 @@ const removeZero = (phoneNumber) => {
   return phoneNumber;
 };
 
+
+const  generateRequestId = ()=> {
+  const now = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+  );
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+
+  const timestamp = `${year}${month}${day}${hour}${minute}`;
+  const random = crypto.randomBytes(5).toString("hex");
+
+  return `${timestamp}${random}`;
+}
+
   module.exports = {
     convertPhoneToISO,
     generateAccountNumber,
     generateEmailVerificationCode,
     storage,
     fileFilter,
-    removeZero
+    removeZero,
+    generateRequestId,
     // transporter
   }
