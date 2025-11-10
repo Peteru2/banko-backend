@@ -339,10 +339,10 @@ const transfer = async (req, res) => {
       recipient: recipientWallet.user,
     });
     await notification.save();
-    res.json({ message: "Funds transferred successfully" });
+    res.json({success: true, message: "Funds transferred successfully" });
   } catch (error) {
     console.error("Failed to transfer funds:", error);
-    res.status(50).json({ error: "Internal server error" });
+    res.status(50).json({ error: "Internal server error" })
   }
 };
 
