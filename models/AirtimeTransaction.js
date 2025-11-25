@@ -8,8 +8,8 @@ const AirtimeTransactionSchema = new mongoose.Schema({
   request_Id: { type: String, required: true, unique: true },
   status: {
     type: String,
-    enum: ["pending", "successful", "failed"],
-    default: "pending",
+    enum: ["Pending", "Successful", "Failed"],
+    default: "Pending",
   },
   date: {
       type: Date,

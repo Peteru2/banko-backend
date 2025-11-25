@@ -3,43 +3,56 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 
 const { AirtimeTransaction } = require("../models/AirtimeTransaction");
-const { User } = require("../models/User");
 const { Wallet } = require("../models/Wallet");
 const { generateRequestId } = require("../utils/index");
-const { requeryVTpass  } = require("../utils/index");
-
 
 const airtimePurchase = async (req, res) => {
   const { phone, amount, network } = req.body;
   const userId = req.user?.id || req.user?._id;
-   
+
   if (!phone || !amount || !network) {
     return res.status(400).json({
       success: false,
-      message: "phone, amount and network are required.",
+      message: "Phone, amount, and network are required.",
     });
   }
+
 
   const amt = Number(amount);
   if (Number.isNaN(amt) || amt <= 0) {
     return res.status(400).json({ success: false, message: "Invalid amount." });
   }
 
-  // Validate phone number format (Nigeria)
+  let net;
+
+  if (network === "mtn") {
+  net = "1";
+} else if (network === "airtel") {
+  net = "2";
+} else if (network === "glo") {
+  net = "3";
+} else if (network === "9mobile") {
+  net = "4";
+} else {
+  // optional: handle invalid network
+  throw new Error("Invalid network");
+}
+
   const sanitizedPhone = phone.replace(/\s+/g, "");
-  if (
-    !/^0\d{9,10}$/.test(sanitizedPhone) &&
-    !/^\+?234\d{9}$/.test(sanitizedPhone)
-  ) {
+  if (!/^0\d{9,10}$/.test(sanitizedPhone) && !/^\+?234\d{9}$/.test(sanitizedPhone)) {
     return res.status(400).json({ success: false, message: "Invalid phone number format." });
   }
 
-  const request_Id = generateRequestId();
+  // Sandbox requirement: must use 08011111111
+  const isSandbox = process.env.VTU_NAIJA_SANDBOX === "true";
+  const phoneToUse = isSandbox ? "08011111111" : sanitizedPhone;
+
+  const requestId = generateRequestId();
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Get Wallet inside session
+    // Check wallet
     const wallet = await Wallet.findOne({ user: userId }).session(session);
     if (!wallet) {
       await session.abortTransaction();
@@ -53,11 +66,11 @@ const airtimePurchase = async (req, res) => {
       return res.status(400).json({ success: false, message: "Insufficient balance" });
     }
 
-    // Deduct the balance FIRST
-    wallet.balance = Number(wallet.balance) - amt;
+    // Deduct wallet first
+    wallet.balance -= amt;
     await wallet.save({ session });
 
-    
+    // Create AirtimeTransaction
     const airtimeTx = await AirtimeTransaction.create(
       [
         {
@@ -65,8 +78,8 @@ const airtimePurchase = async (req, res) => {
           phoneNumber: sanitizedPhone,
           network,
           amount: amt,
-          status: "pending",
-          request_Id,
+          status: "Pending",
+          request_Id: requestId,
         },
       ],
       { session }
@@ -74,37 +87,42 @@ const airtimePurchase = async (req, res) => {
 
     const airtimeRecord = airtimeTx[0];
 
-    // Prepare provider request
+    // Prepare VTU Naija API request
+    const vtUrl = isSandbox
+      ? "https://sandbox.vtunaija.com.ng/api/topup/"
+      : "https://vtunaija.com.ng/api/topup/";
+console.log(isSandbox)
     const vtPayload = {
-      serviceID: network,
-      phone: sanitizedPhone,
-      amount: amt,
-      request_id:request_Id,
+      network: net, // 1=MTN,2=GLO,3=9Mobile,4=Airtel
+      mobile_number: phoneToUse,
+      Ported_number: true.toString(),
+      amount: amt.toString(),
+      airtime_type: "VTU",
     };
-
-    const vtUrl = `${process.env.VTPASS_BASE_URL}/pay`;
+    console.log(vtPayload)
+    console.log(process.env.VTU_NAIJA_API_KEY)
 
     const axiosConfig = {
-  headers: {
-    "api-key": process.env.VTPASS_API_KEY,
-    "secret-key": process.env.VTPASS_SECRET_KEY,
-    "Content-Type": "application/json",
-  },
-  timeout: 30000,
-};
+      headers: {
+        Authorization: `Token ${process.env.VTU_NAIJA_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 30000,
+    };
 
     let providerRes;
     try {
       providerRes = await axios.post(vtUrl, vtPayload, axiosConfig);
+      console.log(providerRes)
+      
     } catch (err) {
       const providerErr = err.response?.data || { message: err.message };
-
-      // Mark transaction failed + Refund wallet
-      airtimeRecord.status = "failed";
+      console.log(providerErr)
+      airtimeRecord.status = "Failed";
       airtimeRecord.provider_response = providerErr;
       await airtimeRecord.save({ session });
 
-      wallet.balance = Number(wallet.balance) + amt;
+      wallet.balance += amt;
       await wallet.save({ session });
 
       await session.commitTransaction();
@@ -117,92 +135,56 @@ const airtimePurchase = async (req, res) => {
       });
     }
 
-    const providerData = providerRes.data || {};
-let isSuccess =
-  providerData?.code === "000" ||
-  /success|delivered/i.test(providerData?.response_description || "");
+    const data = providerRes.data || {};
+    const isSuccess =
+      data?.Status?.toLowerCase() === "successful" ||
+      data?.status?.toLowerCase() === "success";
 
-// If not success, try REQUERY
-if (!isSuccess) {
- 
-await new Promise(resolve => setTimeout(resolve, 3000)); const requeryRes = await requeryVTpass(request_Id); 
-  
+    if (isSuccess) {
+      airtimeRecord.status = "Successful";
+      airtimeRecord.provider_response = data;
+      await airtimeRecord.save({ session });
 
-  const requerySuccess =
-    requeryRes?.code === "000" ||
-    /success|delivered/i.test(requeryRes?.response_description || "");
+      await session.commitTransaction();
+      session.endSession();
 
-  if (requerySuccess) {
-    isSuccess = true;
-    providerData = requeryRes; // overwrite response
-  }
-}
+      const updatedWallet = await Wallet.findOne({ user: userId });
 
-if (isSuccess) {
-  airtimeRecord.status = "successful";
-  airtimeRecord.provider_response = providerData;
-  await airtimeRecord.save({ session });
+      return res.status(200).json({
+        success: true,
+        message: `Airtime purchase successful for ${sanitizedPhone}`,
+        data: {
+          transaction: airtimeRecord,
+          provider_response: data,
+          balance: updatedWallet.balance,
+        },
+      });
+    }
 
-  await session.commitTransaction();
-  session.endSession();
+    // Failed transaction
+    airtimeRecord.status = "Failed";
+    airtimeRecord.provider_response = data;
+    await airtimeRecord.save({ session });
 
-  const updatedWallet = await Wallet.findOne({ user: userId });
+    wallet.balance += amt;
+    await wallet.save({ session });
 
-  return res.status(200).json({
-    success: true,
-    message: "Airtime purchase successful",
-    data: {
-      transaction: airtimeRecord,
-      provider_response: providerData,
-      balance: updatedWallet.balance,
-    },
-  });
-}
+    await session.commitTransaction();
+    session.endSession();
 
-// Failed after requery
-airtimeRecord.status = "failed";
-airtimeRecord.provider_response = providerData;
-await airtimeRecord.save({ session });
-
-wallet.balance += amt;
-await wallet.save({ session });
-
-await session.commitTransaction();
-session.endSession();
-
-return res.status(400).json({
-  success: false,
-  message: "Airtime purchase failed",
-  provider_response: providerData,
-});
-
+    return res.status(400).json({
+      success: false,
+      message: "Airtime purchase failed",
+      provider_response: data,
+    });
   } catch (error) {
-    console.error("Airtime error:", error);
-
+    console.error("Airtime VTU Naija error:", error);
     try {
       await session.abortTransaction();
     } catch {}
-
     session.endSession();
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-const airtimeTransactionHistory = async (req, res) =>{
-  // try{
-  //    const userID = req.user.userId
-  //    console.log(userID)
-  //    const userAirtimePurchase =await  User.findOne({user})
-  // }
-  // catch(err){
-  //     console.log(err)
-  // }
-
-}
-
-module.exports = { 
-  airtimePurchase,
-  // airtimeTransactionHistory
-
-
-};
+module.exports = { airtimePurchase };
