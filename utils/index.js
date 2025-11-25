@@ -5,6 +5,7 @@ const path = require("path");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 const  crypto = require( "crypto");
+const axios = require("axios")
 
 
 const convertPhoneToISO = (number, countryCode = "234") => {
@@ -149,6 +150,28 @@ const  generateRequestId = ()=> {
   return `${timestamp}${random}`;
 }
 
+const requeryVTpass = async (request_id) =>{
+try {
+    const url = `${process.env.VTPASS_BASE_URL}/requery`;
+
+    const response = await axios.post(
+      url,
+      { request_id },
+      {
+        headers: {
+          "api-key": process.env.VTPASS_API_KEY,
+          "secret-key": process.env.VTPASS_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+        timeout: 30000,
+      }
+    );
+
+    return response.data;
+  } catch (err) {
+    return err.response?.data || { message: err.message };
+  }
+}
   module.exports = {
     convertPhoneToISO,
     generateAccountNumber,
@@ -157,5 +180,6 @@ const  generateRequestId = ()=> {
     fileFilter,
     removeZero,
     generateRequestId,
+     requeryVTpass,
     // transporter
   }

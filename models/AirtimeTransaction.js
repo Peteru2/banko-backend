@@ -11,6 +11,10 @@ const AirtimeTransactionSchema = new mongoose.Schema({
     enum: ["pending", "successful", "failed"],
     default: "pending",
   },
+  date: {
+      type: Date,
+      default: Date.now
+    },
   vtpassResponse: Object,
 }, { timestamps: true });
 

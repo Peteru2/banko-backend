@@ -6,6 +6,8 @@ const { AirtimeTransaction } = require("../models/AirtimeTransaction");
 const { User } = require("../models/User");
 const { Wallet } = require("../models/Wallet");
 const { generateRequestId } = require("../utils/index");
+const { requeryVTpass  } = require("../utils/index");
+
 
 const airtimePurchase = async (req, res) => {
   const { phone, amount, network } = req.body;
@@ -33,7 +35,6 @@ const airtimePurchase = async (req, res) => {
   }
 
   const request_Id = generateRequestId();
-console.log(request_Id)
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -56,7 +57,7 @@ console.log(request_Id)
     wallet.balance = Number(wallet.balance) - amt;
     await wallet.save({ session });
 
-    // Create Pending Transaction
+    
     const airtimeTx = await AirtimeTransaction.create(
       [
         {
@@ -117,47 +118,64 @@ console.log(request_Id)
     }
 
     const providerData = providerRes.data || {};
-    const responseMessage = providerData.response_description || providerData.message || "";
-    const isSuccess =
-        providerData?.code === "000" ||
-        /success/i.test(providerData?.response_description || "");
-    console.log("Provider Response => ", providerData);
-    if (isSuccess) {
-      airtimeRecord.status = "success";
-      airtimeRecord.provider_response = providerData;   
-      await airtimeRecord.save({ session });
+let isSuccess =
+  providerData?.code === "000" ||
+  /success|delivered/i.test(providerData?.response_description || "");
 
-      await session.commitTransaction();
-      session.endSession();
+// If not success, try REQUERY
+if (!isSuccess) {
+ 
+await new Promise(resolve => setTimeout(resolve, 3000)); const requeryRes = await requeryVTpass(request_Id); 
+  
 
-      const updatedWallet = await Wallet.findOne({ user: userId });
+  const requerySuccess =
+    requeryRes?.code === "000" ||
+    /success|delivered/i.test(requeryRes?.response_description || "");
 
-      return res.status(200).json({
-        success: true,
-        message: "Airtime purchase successful",
-        data: {
-          transaction: airtimeRecord,
-          provider_response: providerData,
-          balance: updatedWallet.balance,
-        },
-      });
-    } else {
-      airtimeRecord.status = "failed";
-      airtimeRecord.provider_response = providerData;
-      await airtimeRecord.save({ session });
+  if (requerySuccess) {
+    isSuccess = true;
+    providerData = requeryRes; // overwrite response
+  }
+}
 
-      wallet.balance = Number(wallet.balance) + amt;
-      await wallet.save({ session });
+if (isSuccess) {
+  airtimeRecord.status = "successful";
+  airtimeRecord.provider_response = providerData;
+  await airtimeRecord.save({ session });
 
-      await session.commitTransaction();
-      session.endSession();
+  await session.commitTransaction();
+  session.endSession();
 
-      return res.status(400).json({
-        success: false,
-        message: "Airtime purchase failed from provider",
-        provider_response: providerData,
-      });
-    }
+  const updatedWallet = await Wallet.findOne({ user: userId });
+
+  return res.status(200).json({
+    success: true,
+    message: "Airtime purchase successful",
+    data: {
+      transaction: airtimeRecord,
+      provider_response: providerData,
+      balance: updatedWallet.balance,
+    },
+  });
+}
+
+// Failed after requery
+airtimeRecord.status = "failed";
+airtimeRecord.provider_response = providerData;
+await airtimeRecord.save({ session });
+
+wallet.balance += amt;
+await wallet.save({ session });
+
+await session.commitTransaction();
+session.endSession();
+
+return res.status(400).json({
+  success: false,
+  message: "Airtime purchase failed",
+  provider_response: providerData,
+});
+
   } catch (error) {
     console.error("Airtime error:", error);
 
@@ -170,4 +188,21 @@ console.log(request_Id)
   }
 };
 
-module.exports = { airtimePurchase };
+const airtimeTransactionHistory = async (req, res) =>{
+  // try{
+  //    const userID = req.user.userId
+  //    console.log(userID)
+  //    const userAirtimePurchase =await  User.findOne({user})
+  // }
+  // catch(err){
+  //     console.log(err)
+  // }
+
+}
+
+module.exports = { 
+  airtimePurchase,
+  // airtimeTransactionHistory
+
+
+};
