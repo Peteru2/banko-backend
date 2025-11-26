@@ -1,13 +1,18 @@
 // controllers/airtimePurchase.js
 const axios = require("axios");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+
+
 
 const { AirtimeTransaction } = require("../models/AirtimeTransaction");
 const { Wallet } = require("../models/Wallet");
+const { User } = require("../models/User");
+
 const { generateRequestId } = require("../utils/index");
 
-const airtimePurchase = async (req, res) => {
-  const { phone, amount, network } = req.body;
+const airtimeVerify = async(req, res) =>{
+   const { phone, amount, network } = req.body;
   const userId = req.user?.id || req.user?._id;
 
   if (!phone || !amount || !network) {
@@ -23,6 +28,26 @@ const airtimePurchase = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid amount." });
   }
 
+}
+
+const airtimePurchase = async (req, res) => {
+  const { phone, amount, network, pin} = req.body;
+  const userId = req.user?.id || req.user?._id;
+
+  if (!phone || !amount || !network) {
+    return res.status(400).json({
+      success: false,
+      message: "Phone, amount, and network are required.",
+    });
+  }
+
+
+  const amt = Number(amount);
+  if (Number.isNaN(amt) || amt <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid amount." });
+  }
+
+  
   let net;
 
   if (network === "mtn") {
@@ -52,7 +77,20 @@ const airtimePurchase = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Check wallet
+    // Check user  
+    const user = await User.findById(req.user.userId);
+    if(!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    const pinMatch = await bcrypt.compare(
+      pin,
+      user.transactionPin
+    );
+    if (!pinMatch){
+           return res.status(400).json({ success:false, message: "Transaction Pin Incorrect" });
+    }
     const wallet = await Wallet.findOne({ user: userId }).session(session);
     if (!wallet) {
       await session.abortTransaction();
@@ -187,4 +225,7 @@ console.log(isSandbox)
   }
 };
 
-module.exports = { airtimePurchase };
+module.exports = { 
+  airtimeVerify,
+  airtimePurchase
+ };

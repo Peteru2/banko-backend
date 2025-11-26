@@ -13,7 +13,7 @@ const { googleSignUpController } = require('./controller/googleSignUpController.
 const { updatePhoneNumber } = require('./controller/updatePhoneNumberController.js');
 const { allUsersController } = require('./controller/allUsersController.js');
 const { deleteUserController } = require('./controller/deleteUserController.js');
-const {airtimePurchase} = require("./controller/airtimeController.js")
+const {airtimeVerify, airtimePurchase} = require("./controller/airtimeController.js")
 const cookieParser = require("cookie-parser");
 
 const app = express();
@@ -62,7 +62,9 @@ apiRouter.get('/balance', Controller.getBalance);
 apiRouter.post('/validateTransfer', Controller.validateTransfer);
 apiRouter.post('/transfer', Controller.transfer);
 apiRouter.get('/transactionHistory', transHistoryController.transferHistory);
-apiRouter.post("/transactions/airtime", airtimePurchase)
+apiRouter.post("/transactions/airtimeVerify", airtimeVerify)
+apiRouter.post("/transactions/airtimePurchase", airtimePurchase)
+
 
 
 apiRouter.use("/uploads", express.static("uploads"));
