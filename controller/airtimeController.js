@@ -15,32 +15,54 @@ const airtimeVerify = async(req, res) =>{
    const { phone, amount, network } = req.body;
   const userId = req.user?.id || req.user?._id;
 
-  if (!phone || !amount || !network) {
+   const sanitizedPhone = phone.replace(/\s+/g, "");
+
+ if (!phone || !amount || !network) {
     return res.status(400).json({
       success: false,
       message: "Phone, amount, and network are required.",
     });
   }
-
+  if (!/^0\d{9,10}$/.test(sanitizedPhone) && !/^\+?234\d{9}$/.test(sanitizedPhone)) {
+    return res.status(400).json({ success: false, message: "Invalid phone number format." });
+  }
 
   const amt = Number(amount);
   if (Number.isNaN(amt) || amt <= 0) {
     return res.status(400).json({ success: false, message: "Invalid amount." });
   }
 
+  if (process.env.VTU_NAIJA_SANDBOX){
+    return res.status(400).json({ success: false, message: "Sandbox account only, use 08011111111" });
+
+  }
+  try{
+   const wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: "Wallet not found" });
+    }
+
+    if (wallet.balance < amt) {
+      return res.status(400).json({ success: false, message: "Insufficient balance" });
+    }
+    if (amt>50) {
+      return res.status(400).json({ success: false, message: "You cannot buy more than ₦50" });
+    }
+  if(wallet.accountNumber != sanitizedPhone){
+      return res.status(400).json({ success: false, message: "This is not your registered mobile number" });
+    }
+    return res.status(200).json({success:true})
+    }
+    catch(err){
+      return res.status(500).json({success:false, message:"Not Working"})
+    }
+
+
 }
 
 const airtimePurchase = async (req, res) => {
   const { phone, amount, network, pin} = req.body;
   const userId = req.user?.id || req.user?._id;
-
-  if (!phone || !amount || !network) {
-    return res.status(400).json({
-      success: false,
-      message: "Phone, amount, and network are required.",
-    });
-  }
-
 
   const amt = Number(amount);
   if (Number.isNaN(amt) || amt <= 0) {
@@ -89,22 +111,13 @@ const airtimePurchase = async (req, res) => {
       user.transactionPin
     );
     if (!pinMatch){
+      await session.abortTransaction();
+      session.endSession();
            return res.status(400).json({ success:false, message: "Transaction Pin Incorrect" });
     }
-    const wallet = await Wallet.findOne({ user: userId }).session(session);
-    if (!wallet) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ success: false, message: "Wallet not found" });
-    }
-
-    if (wallet.balance < amt) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ success: false, message: "Insufficient balance" });
-    }
-
+   
     // Deduct wallet first
+   const wallet = await Wallet.findOne({ user: userId }).session(session);
     wallet.balance -= amt;
     await wallet.save({ session });
 
@@ -129,6 +142,9 @@ const airtimePurchase = async (req, res) => {
     const vtUrl = isSandbox
       ? "https://sandbox.vtunaija.com.ng/api/topup/"
       : "https://vtunaija.com.ng/api/topup/";
+    const vtAPIk = isSandbox 
+      ? process.env.VTU_NAIJA_SANBOX_API_KEY
+      : process.env.VTU_NAIJA_API_KEY
 console.log(isSandbox)
     const vtPayload = {
       network: net, // 1=MTN,2=GLO,3=9Mobile,4=Airtel
@@ -142,7 +158,7 @@ console.log(isSandbox)
 
     const axiosConfig = {
       headers: {
-        Authorization: `Token ${process.env.VTU_NAIJA_API_KEY}`,
+        Authorization: `Token ${vtAPIk}`,
         "Content-Type": "application/json",
       },
       timeout: 30000,
@@ -157,7 +173,7 @@ console.log(isSandbox)
       const providerErr = err.response?.data || { message: err.message };
       console.log(providerErr)
       airtimeRecord.status = "Failed";
-      airtimeRecord.provider_response = providerErr;
+      airtimeRecord.provider_response = providerErr; 
       await airtimeRecord.save({ session });
 
       wallet.balance += amt;
