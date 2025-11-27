@@ -32,10 +32,10 @@ const airtimeVerify = async(req, res) =>{
     return res.status(400).json({ success: false, message: "Invalid amount." });
   }
 
-  if (process.env.VTU_NAIJA_SANDBOX){
+  if (process.env.VTU_NAIJA_SANDBOX===true){
     return res.status(400).json({ success: false, message: "Sandbox account only, use 08011111111" });
-
   }
+  
   try{
    const wallet = await Wallet.findOne({ user: userId });
     if (!wallet) {
