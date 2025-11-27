@@ -318,7 +318,8 @@ const transfer = async (req, res) => {
       return res.status(400).json({ error: "Transaction Pin Incorrect" });
     }
 
- 
+ senderWallet.balance = Number(senderWallet.balance) 
+ recipientWallet.balance = Number(recipientWallet.balance)
     senderWallet.balance -= amount;
     await senderWallet.save();
 

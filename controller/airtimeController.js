@@ -16,7 +16,7 @@ const airtimeVerify = async(req, res) =>{
   const userId = req.user?.id || req.user?._id;
 
    const sanitizedPhone = phone.replace(/\s+/g, "");
-
+  const sandBoxPhone="08011111111"
  if (!phone || !amount || !network) {
     return res.status(400).json({
       success: false,
@@ -32,12 +32,15 @@ const airtimeVerify = async(req, res) =>{
     return res.status(400).json({ success: false, message: "Invalid amount." });
   }
 
-  if (process.env.VTU_NAIJA_SANDBOX===true){
+  if (process.env.VTU_NAIJA_SANDBOX==="true" && sanitizedPhone!=sandBoxPhone){
     return res.status(400).json({ success: false, message: "Sandbox account only, use 08011111111" });
   }
-  
+
   try{
    const wallet = await Wallet.findOne({ user: userId });
+   const user = await User.findOne({ _id: userId });
+   console.log(user.airtimePurchaseCount)
+  
     if (!wallet) {
       return res.status(404).json({ success: false, message: "Wallet not found" });
     }
@@ -48,13 +51,17 @@ const airtimeVerify = async(req, res) =>{
     if (amt>50) {
       return res.status(400).json({ success: false, message: "You cannot buy more than ₦50" });
     }
-  if(wallet.accountNumber != sanitizedPhone){
+  if(wallet.accountNumber != sanitizedPhone && process.env.VTU_NAIJA_SANDBOX==="false"){
       return res.status(400).json({ success: false, message: "This is not your registered mobile number" });
+    }
+    if (user.airtimePurchaseCount = 1 && process.env.VTU_NAIJA_SANDBOX==="false" ){
+      return res.status(400).json({ success: false, message: "You cannot buy more than once" });
+
     }
     return res.status(200).json({success:true})
     }
     catch(err){
-      return res.status(500).json({success:false, message:"Not Working"})
+      return res.status(500).json({success:false, message:err})
     }
 
 
@@ -143,19 +150,18 @@ const airtimePurchase = async (req, res) => {
       ? "https://sandbox.vtunaija.com.ng/api/topup/"
       : "https://vtunaija.com.ng/api/topup/";
     const vtAPIk = isSandbox 
-      ? process.env.VTU_NAIJA_SANBOX_API_KEY
+      ? process.env.VTU_NAIJA_SANDBOX_API_KEY
       : process.env.VTU_NAIJA_API_KEY
 console.log(isSandbox)
     const vtPayload = {
       network: net, // 1=MTN,2=GLO,3=9Mobile,4=Airtel
       mobile_number: phoneToUse,
-      Ported_number: true.toString(),
-      amount: amt.toString(),
+      Ported_number: true,
+      amount: amt,
       airtime_type: "VTU",
     };
     console.log(vtPayload)
-    console.log(process.env.VTU_NAIJA_API_KEY)
-
+    
     const axiosConfig = {
       headers: {
         Authorization: `Token ${vtAPIk}`,
@@ -203,6 +209,7 @@ console.log(isSandbox)
       session.endSession();
 
       const updatedWallet = await Wallet.findOne({ user: userId });
+      await User.findByIdAndUpdate(userId, { $inc: { airtimePurchaseCount: 1 } });
 
       return res.status(200).json({
         success: true,

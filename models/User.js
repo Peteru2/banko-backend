@@ -38,7 +38,8 @@ const registrationSchema = new Schema({
     bvnFingerprint: String,
     accountNumber: String,
     emailVerificationCodeExpiryDate: String,
-    refreshToken: String,
+    airtimePurchaseCount:{type:Number, default:0},
+    refreshToken: String,   
 },
 {
     timestamps: true 
