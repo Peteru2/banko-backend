@@ -10,6 +10,7 @@ const { Wallet } = require("../models/Wallet");
 const { User } = require("../models/User");
 
 const { generateRequestId } = require("../utils/index");
+  const isSandbox = process.env.VTU_NAIJA_SANDBOX === "true";
 
 const airtimeVerify = async(req, res) =>{
    const { phone, amount, network } = req.body;
@@ -51,10 +52,10 @@ const airtimeVerify = async(req, res) =>{
     if (amt>50) {
       return res.status(400).json({ success: false, message: "You cannot buy more than ₦50" });
     }
-  if(wallet.accountNumber != sanitizedPhone && process.env.VTU_NAIJA_SANDBOX==="false"){
+  if(wallet.accountNumber != sanitizedPhone && !isSandbox){
       return res.status(400).json({ success: false, message: "This is not your registered mobile number" });
     }
-    if (user.airtimePurchaseCount = 1 && process.env.VTU_NAIJA_SANDBOX==="false" ){
+    if (user.airtimePurchaseCount >= 1 && !isSandbox ){
       return res.status(400).json({ success: false, message: "You cannot buy more than once" });
 
     }
@@ -98,7 +99,6 @@ const airtimePurchase = async (req, res) => {
   }
 
   // Sandbox requirement: must use 08011111111
-  const isSandbox = process.env.VTU_NAIJA_SANDBOX === "true";
   const phoneToUse = isSandbox ? "08011111111" : sanitizedPhone;
 
   const requestId = generateRequestId();
